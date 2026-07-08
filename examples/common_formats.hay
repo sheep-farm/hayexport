@@ -1,0 +1,12 @@
+// Common format export examples with hayexport
+
+import("sheep-farm/hayexport", as=export)
+
+// Export to CSV with comma delimiter and header
+let data = "name,age,salary\nJohn,30,50000\nJane,25,45000"
+export::export_csv(data, "output.csv", ",", true)
+print("Exported to CSV")
+
+// Export to JSON with pretty formatting
+export::export_json(data, "output.json", true)
+print("Exported to JSON")

@@ -1,0 +1,14 @@
+[package]
+name = "hayexport"
+version = "0.1.0"
+edition = "2021"
+description = "Data export plugin for Hayashi"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+hayashi-plugin-sdk = { git = "https://github.com/sheep-farm/hayashi-plugin-sdk.git", branch = "main" }
+csv = "1.3"
+serde_json = "1.0"
