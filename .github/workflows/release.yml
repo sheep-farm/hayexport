@@ -39,13 +39,13 @@ jobs:
 
       - name: Package (Unix)
         if: runner.os != 'Windows'
-        run: tar czf hayexport-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release libhayexport.${{ matrix.ext }}
+        run: tar czf hayexport-v${{ github.ref_name }}-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release libhayexport.${{ matrix.ext }}
 
       - name: Package (Windows)
         if: runner.os == 'Windows'
-        run: Compress-Archive -Path target/${{ matrix.target }}/release/hayexport.dll -DestinationPath hayexport-${{ matrix.target }}.zip
+        run: Compress-Archive -Path target/${{ matrix.target }}/release/hayexport.dll -DestinationPath hayexport-v${{ github.ref_name }}-${{ matrix.target }}.zip
 
       - name: Upload binaries to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: hayexport-${{ matrix.target }}.*
+          files: hayexport-v${{ github.ref_name }}-${{ matrix.target }}.*
