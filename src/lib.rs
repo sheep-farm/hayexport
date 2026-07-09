@@ -1,9 +1,9 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
+use csv::WriterBuilder;
 use hayashi_plugin_sdk::{hayashi_fn, hayashi_plugin};
+use serde_json::{to_string, to_string_pretty};
 use std::fs::File;
 use std::io::Write;
-use csv::WriterBuilder;
-use serde_json::{to_string_pretty, to_string};
 
 hayashi_plugin!();
 
@@ -40,8 +40,14 @@ pub fn export_csv(data: String, filepath: String, delimiter: String, has_header:
                 }
                 for item in arr {
                     if let Some(obj) = item.as_object() {
-                        let row: Vec<String> = headers.iter()
-                            .map(|k| obj.get(k).and_then(|v| v.as_str()).unwrap_or("").to_string())
+                        let row: Vec<String> = headers
+                            .iter()
+                            .map(|k| {
+                                obj.get(k)
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("")
+                                    .to_string()
+                            })
                             .collect();
                         if wtr.write_record(&row).is_err() {
                             return false;
@@ -76,12 +82,10 @@ pub fn export_json(data: String, filepath: String, pretty: bool) -> bool {
     };
 
     match json_str {
-        Ok(s) => {
-            match File::create(&filepath) {
-                Ok(mut file) => file.write_all(s.as_bytes()).is_ok(),
-                Err(_) => false,
-            }
-        }
+        Ok(s) => match File::create(&filepath) {
+            Ok(mut file) => file.write_all(s.as_bytes()).is_ok(),
+            Err(_) => false,
+        },
         Err(_) => false,
     }
 }
