@@ -1,3 +1,4 @@
+#![allow(clippy::not_unsafe_ptr_arg_deref)]
 use hayashi_plugin_sdk::{hayashi_fn, hayashi_plugin};
 use std::fs::File;
 use std::io::Write;
@@ -34,10 +35,8 @@ pub fn export_csv(data: String, filepath: String, delimiter: String, has_header:
         if let Some(first) = arr.first() {
             if let Some(obj) = first.as_object() {
                 let headers: Vec<String> = obj.keys().cloned().collect();
-                if has_header {
-                    if wtr.write_record(&headers).is_err() {
-                        return false;
-                    }
+                if has_header && wtr.write_record(&headers).is_err() {
+                    return false;
                 }
                 for item in arr {
                     if let Some(obj) = item.as_object() {
@@ -56,7 +55,7 @@ pub fn export_csv(data: String, filepath: String, delimiter: String, has_header:
     wtr.flush().is_ok()
 }
 
-/// 2. export_json(data, filepath, pretty)
+/// export_json(data, filepath, pretty)
 /// Export data to JSON file
 /// data: data to export (JSON string)
 /// filepath: output file path
@@ -84,5 +83,80 @@ pub fn export_json(data: String, filepath: String, pretty: bool) -> bool {
             }
         }
         Err(_) => false,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    // #[hayashi_fn] renomeia a fn para __hayashi_impl_*; chamamos diretamente.
+
+    #[test]
+    fn test_export_json_compact() {
+        let path = "/tmp/hayexport_test_compact.json".to_string();
+        let data = r#"[{"a":1,"b":"hello"}]"#.to_string();
+        let ok = __hayashi_impl_export_json(data, path.clone(), false);
+        assert!(ok, "export_json deve retornar true");
+        let content = fs::read_to_string(&path).unwrap();
+        // JSON compacto não tem newlines extras
+        assert!(content.contains("\"a\""));
+        assert!(content.contains("\"hello\""));
+        let _ = fs::remove_file(&path);
+    }
+
+    #[test]
+    fn test_export_json_pretty() {
+        let path = "/tmp/hayexport_test_pretty.json".to_string();
+        let data = r#"{"x":42,"y":3.14}"#.to_string();
+        let ok = __hayashi_impl_export_json(data, path.clone(), true);
+        assert!(ok, "export_json pretty deve retornar true");
+        let content = fs::read_to_string(&path).unwrap();
+        // Pretty print tem pelo menos uma quebra de linha
+        assert!(content.contains('\n'), "esperado JSON indentado");
+        assert!(content.contains("42"));
+        let _ = fs::remove_file(&path);
+    }
+
+    #[test]
+    fn test_export_json_invalid_data() {
+        let path = "/tmp/hayexport_test_invalid.json".to_string();
+        let ok = __hayashi_impl_export_json("not json".to_string(), path.clone(), false);
+        assert!(!ok, "JSON inválido deve retornar false");
+    }
+
+    #[test]
+    fn test_export_csv_basic() {
+        let path = "/tmp/hayexport_test.csv".to_string();
+        let data = r#"[{"name":"Alice","age":"30"},{"name":"Bob","age":"25"}]"#.to_string();
+        let ok = __hayashi_impl_export_csv(data, path.clone(), ",".to_string(), true);
+        assert!(ok, "export_csv deve retornar true");
+        let content = fs::read_to_string(&path).unwrap();
+        assert!(content.contains("Alice"));
+        assert!(content.contains("Bob"));
+        let _ = fs::remove_file(&path);
+    }
+
+    #[test]
+    fn test_export_csv_invalid_path() {
+        let ok = __hayashi_impl_export_csv(
+            r#"[{"a":"1"}]"#.to_string(),
+            "/nonexistent_dir/file.csv".to_string(),
+            ",".to_string(),
+            true,
+        );
+        assert!(!ok, "caminho inválido deve retornar false");
+    }
+
+    #[test]
+    fn test_export_csv_invalid_data() {
+        let ok = __hayashi_impl_export_csv(
+            "not json".to_string(),
+            "/tmp/hayexport_bad.csv".to_string(),
+            ",".to_string(),
+            true,
+        );
+        assert!(!ok, "JSON inválido deve retornar false");
     }
 }
