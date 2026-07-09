@@ -1,5 +1,8 @@
 [plugin]
 name = "hayexport"
+# Este plugin estende o builtin `export` do host com formatos adicionais
+# (Excel, Stata .dta, etc.). O host é informado durante `hay install`.
+primitives = ["export"]
 version = "0.1.0"
 author = "sheep-farm"
 description = "Data export plugin for Hayashi"
